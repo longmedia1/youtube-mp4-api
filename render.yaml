@@ -3,6 +3,4 @@ services:
     name: youtube-mp4-api
     env: python
     buildCommand: "pip install -r requirements.txt"
-    startCommand: "python api.py"
-    plan: free
-    region: oregon
+    startCommand: "gunicorn api:app"
