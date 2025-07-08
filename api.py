@@ -4,31 +4,33 @@ import yt_dlp
 app = Flask(__name__)
 
 @app.route('/download', methods=['GET'])
-def download_video():
+def download():
     video_url = request.args.get('url')
-
     if not video_url:
-        return jsonify({'error': 'No URL provided'}), 400
+        return jsonify({'error': 'Missing URL parameter'}), 400
 
     ydl_opts = {
-        'quiet': True,
-        'no_warnings': True,
         'format': 'mp4',
-        'extract_flat': 'in_playlist',
+        'quiet': True,
         'skip_download': True,
+        'noplaylist': True,
         'forcejson': True,
+        'extract_flat': False,
+        'nocheckcertificate': True,
+        'geo_bypass': True,
+        'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
     }
 
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            info_dict = ydl.extract_info(video_url, download=False)
-            formats = info_dict.get('formats', [])
-            video_url = next((f['url'] for f in formats if f.get('ext') == 'mp4' and f.get('vcodec') != 'none'), None)
-
-            if video_url:
-                return jsonify({'download_url': video_url})
-            else:
-                return jsonify({'error': 'No MP4 URL found'}), 404
-
+            info = ydl.extract_info(video_url, download=False)
+            formats = info.get('formats', [])
+            for f in formats:
+                if f.get('ext') == 'mp4' and f.get('acodec') != 'none' and f.get('vcodec') != 'none':
+                    return jsonify({
+                        'title': info.get('title'),
+                        'url': f.get('url')
+                    })
+            return jsonify({'error': 'No suitable MP4 format found'})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
