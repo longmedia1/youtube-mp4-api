@@ -1,30 +1,34 @@
-from flask import Flask, request, send_file
+from flask import Flask, request, jsonify
 import yt_dlp
-import os
-import uuid
 
 app = Flask(__name__)
 
-@app.route('/download')
+@app.route('/download', methods=['GET'])
 def download_video():
-    url = request.args.get('url')
-    if not url:
-        return "Falta la URL", 400
+    video_url = request.args.get('url')
 
-    output_filename = f"{uuid.uuid4()}.mp4"
+    if not video_url:
+        return jsonify({'error': 'No URL provided'}), 400
 
     ydl_opts = {
+        'quiet': True,
+        'no_warnings': True,
         'format': 'mp4',
-        'outtmpl': output_filename,
-        'quiet': True
+        'extract_flat': 'in_playlist',
+        'skip_download': True,
+        'forcejson': True,
     }
 
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            ydl.download([url])
-        return send_file(output_filename, as_attachment=True)
+            info_dict = ydl.extract_info(video_url, download=False)
+            formats = info_dict.get('formats', [])
+            video_url = next((f['url'] for f in formats if f.get('ext') == 'mp4' and f.get('vcodec') != 'none'), None)
+
+            if video_url:
+                return jsonify({'download_url': video_url})
+            else:
+                return jsonify({'error': 'No MP4 URL found'}), 404
+
     except Exception as e:
-        return str(e), 500
-    finally:
-        if os.path.exists(output_filename):
-            os.remove(output_filename)
+        return jsonify({'error': str(e)}), 500
