@@ -28,5 +28,4 @@ def download_video():
         if os.path.exists(output_filename):
             os.remove(output_filename)
 
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=10000)
+
