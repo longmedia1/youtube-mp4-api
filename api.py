@@ -1,22 +1,24 @@
-from flask import Flask, request, send_file
+from flask import Flask, request, send_file, jsonify
 import yt_dlp
 import os
 import uuid
+import re
 
 app = Flask(__name__)
-
-@app.route('/')
-def home():
-    return "API lista 🎉"
 
 @app.route('/download')
 def download_video():
     url = request.args.get('url')
     if not url:
-        return "Falta la URL", 400
+        return jsonify({'error': 'Falta la URL'}), 400
+
+    # 🔁 Convertir Shorts a formato estándar
+    shorts_match = re.match(r'https?://(www\.)?youtube\.com/shorts/([a-zA-Z0-9_-]+)', url)
+    if shorts_match:
+        video_id = shorts_match.group(2)
+        url = f'https://www.youtube.com/watch?v={video_id}'
 
     output_filename = f"{uuid.uuid4()}.mp4"
-
     ydl_opts = {
         'format': 'mp4',
         'outtmpl': output_filename,
@@ -28,7 +30,7 @@ def download_video():
             ydl.download([url])
         return send_file(output_filename, as_attachment=True)
     except Exception as e:
-        return str(e), 500
+        return jsonify({'error': str(e)}), 500
     finally:
         if os.path.exists(output_filename):
             os.remove(output_filename)
