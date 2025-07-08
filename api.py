@@ -5,6 +5,10 @@ import uuid
 
 app = Flask(__name__)
 
+@app.route('/')
+def home():
+    return "API lista 🎉"
+
 @app.route('/download')
 def download_video():
     url = request.args.get('url')
@@ -12,6 +16,7 @@ def download_video():
         return "Falta la URL", 400
 
     output_filename = f"{uuid.uuid4()}.mp4"
+
     ydl_opts = {
         'format': 'mp4',
         'outtmpl': output_filename,
@@ -28,4 +33,5 @@ def download_video():
         if os.path.exists(output_filename):
             os.remove(output_filename)
 
-
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=10000)
