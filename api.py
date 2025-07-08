@@ -12,7 +12,6 @@ def download_video():
         return "Falta la URL", 400
 
     output_filename = f"{uuid.uuid4()}.mp4"
-
     ydl_opts = {
         'format': 'mp4',
         'outtmpl': output_filename,
@@ -29,5 +28,5 @@ def download_video():
         if os.path.exists(output_filename):
             os.remove(output_filename)
 
-# Esto permite que gunicorn lo ejecute correctamente desde Render
-app = app
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=10000)
