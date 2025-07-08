@@ -2,5 +2,7 @@ services:
   - type: web
     name: youtube-mp4-api
     env: python
-    buildCommand: "pip install -r requirements.txt"
-    startCommand: "gunicorn api:app"
+    buildCommand: ""
+    startCommand: gunicorn wsgi:app
+    plan: free
+    autoDeploy: true
